@@ -14,17 +14,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import csv
-def merge_csv_fields (filename,output):
 
- with open(filename) as f:
-    reader = csv.reader(f)
-    with open(output, 'w') as g:
-        writer = csv.writer(g)
-        for row in reader:
-            new_row = [' '.join([row[0], row[1]])] + row[2:]
-            writer.writerow(new_row)
 
-def load_table_file(file_path: str, result_file,table_id: str) -> "bigquery.Table":
+def merge_csv_fields(indexes, filename, output):
+
+    x = len(indexes)
+
+    with open(filename) as f:
+        reader = csv.reader(f)
+        with open(output, 'w') as g:
+            writer = csv.writer(g)
+            for row in reader:
+                tempArray = []
+                for i in indexes:
+                    if len(row):
+                        try:
+                            tempArray.append(row[i])
+                        except:
+                           print('list index out of range')
+                           #raise Exception('list index out of range')
+                new_row = [' '.join(tempArray)]
+                writer.writerow(new_row)
+               # print(new_row)
+        #raise Exception('Incorrect data')
+
+
+def merge_csv_fields_original(filename, output):
+
+    with open(filename) as f:
+        reader = csv.reader(f)
+        with open(output, 'w') as g:
+            writer = csv.writer(g)
+            for row in reader:
+                new_row = [' '.join([row[0], row[1]])] + row[2:]
+                writer.writerow(new_row)
+
+
+def load_table_file(file_path: str, result_file, table_id: str) -> "bigquery.Table":
 
     # [START bigquery_load_from_file]
     from google.cloud import bigquery
@@ -32,7 +58,8 @@ def load_table_file(file_path: str, result_file,table_id: str) -> "bigquery.Tabl
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "bahrain-limos-bc2d0ef1ed06.json"
 
     # Construct a BigQuery client object.
-    merge_csv_fields(file_path,result_file)
+    indexes = [0,2,1]
+    merge_csv_fields(indexes,file_path, result_file)
     client = bigquery.Client()
 
     # TODO(developer): Set table_id to the ID of the table to create.
@@ -45,7 +72,8 @@ def load_table_file(file_path: str, result_file,table_id: str) -> "bigquery.Tabl
     )
 
     with open(result_file, "rb") as source_file:
-        job = client.load_table_from_file(source_file, table_id, job_config=job_config)
+        job = client.load_table_from_file(
+            source_file, table_id, job_config=job_config)
 
     job.result()  # Waits for the job to complete.
 
@@ -58,4 +86,6 @@ def load_table_file(file_path: str, result_file,table_id: str) -> "bigquery.Tabl
     # [END bigquery_load_from_file]
     return table
 
-load_table_file("us-states-by-date.csv","success.csv","bahrain-limos.twitter.hina")
+
+load_table_file("us-states-by-date.csv", "success.csv",
+                "bahrain-limos.twitter.abuzar")
